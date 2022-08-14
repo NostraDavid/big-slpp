@@ -54,7 +54,7 @@ def test_table() -> None:
     assert slpp.decode("{[10] = 1}") == {10: 1}
 
     # Void table:
-    assert slpp.decode("{nil}") == {}
+    assert slpp.decode(r"{nil}") == {}
 
     # Values-only table:
     assert slpp.decode('{"10"}') == ["10"]
@@ -208,23 +208,6 @@ def test_saved_variables_npcscan_lua() -> None:
     )
 
 
-# """_NPCScanOptionsCharacter = {
-# \t["Achievements"] = {
-# \t\t[1312] = true,
-# \t\t[2257] = true,
-# \t},
-# \t["NPCWorldIDs"] = {
-# \t\t[18684] = 3,
-# \t\t[32491] = 4,
-# \t},
-# \t["NPCs"] = {
-# \t\t[18684] = "Bro'Gaz the Clanless",
-# \t\t[32491] = "Time-Lost Proto Drake",
-# \t},
-# \t["Version"] = "3.3.5.5",
-# }"""
-
-
 def test_saved_variables_npcscan_lua_minimal_example() -> None:
     def wrap(s: str) -> str:
         return "{" + s + "}"
@@ -234,20 +217,4 @@ def test_saved_variables_npcscan_lua_minimal_example() -> None:
     output_dict = slpp.decode(wrapped_input)
     ordered_dict = order_dict(output_dict)
     output_str = slpp.encode(ordered_dict)
-    assert (
-        output_str
-        == """{
-\t["asd"] = {
-\t\t[1312] = true,
-\t\t[2257] = true,
-\t},
-}"""
-    )
-
-
-# """{
-# \t["asd"] = {
-# \t\t[1312] = true,
-# \t\t[2257] = true,
-# \t}
-# }"""
+    assert output_str == """{\n\t["asd"] = {\n\t\t[1312] = true,\n\t\t[2257] = true,\n\t},\n}"""
