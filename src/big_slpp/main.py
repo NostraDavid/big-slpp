@@ -2,9 +2,7 @@ import re
 import sys
 from numbers import Number
 
-import six
-
-ERRORS = {
+ERRORS: dict[str, str] = {
     "unexp_end_string": "Unexpected end of string while parsing Lua string.",
     "unexp_end_table": "Unexpected end of table while parsing Lua string.",
     "mfnumber_minus": "Malformed number (no digits after initial minus).",
@@ -13,8 +11,8 @@ ERRORS = {
 }
 
 
-def sequential(lst):
-    length = len(lst)
+def sequential(lst) -> bool:
+    length: int = len(lst)
     if length == 0 or lst[0] != 0:
         return False
     for i in range(length):
@@ -29,19 +27,19 @@ class ParseError(Exception):
 
 
 class SLPP(object):
-    def __init__(self):
-        self.text = ""
-        self.ch = ""
-        self.at = 0
-        self.len = 0
-        self.depth = 0
-        self.space = re.compile("\s", re.M)
-        self.alnum = re.compile("\w", re.M)
-        self.newline = "\n"
-        self.tab = "\t"
+    def __init__(self) -> None:
+        self.text: str = ""
+        self.ch: str = ""
+        self.at: int = 0
+        self.len: int = 0
+        self.depth: int = 0
+        self.space: re.Pattern[str] = re.compile(r"\s", re.M)
+        self.alnum: re.Pattern[str] = re.compile(r"\w", re.M)
+        self.newline: str = "\n"
+        self.tab: str = "\t"
 
     def decode(self, text):
-        if not text or not isinstance(text, six.string_types):
+        if not text:
             return
         self.text = text
         self.at, self.ch, self.depth = 0, "", 0
@@ -61,9 +59,7 @@ class SLPP(object):
 
         if isinstance(obj, str):
             s += '"%s"' % obj.replace(r'"', r"\"")
-        elif six.PY2 and isinstance(obj, unicode):
-            s += '"%s"' % obj.encode("utf-8").replace(r'"', r"\"")
-        elif six.PY3 and isinstance(obj, bytes):
+        elif isinstance(obj, bytes):
             s += '"{}"'.format("".join(r"\x{:02x}".format(c) for c in obj))
         elif isinstance(obj, bool):
             s += str(obj).lower()
@@ -79,8 +75,7 @@ class SLPP(object):
                     [
                         x
                         for x in obj
-                        if isinstance(x, Number)
-                        or (isinstance(x, six.string_types) and len(x) < 10)
+                        if isinstance(x, Number) or (isinstance(x, str) and len(x) < 10)
                     ]
                 )
                 == len(obj)
@@ -183,10 +178,10 @@ class SLPP(object):
         raise ParseError(ERRORS["unexp_end_string"])
 
     def object(self):
-        o = {}
+        o: dict = {}
         k = None
-        idx = 0
-        numeric_keys = False
+        idx: int = 0
+        numeric_keys: bool = False
         self.depth += 1
         self.next_chr()
         self.white()
@@ -211,9 +206,7 @@ class SLPP(object):
                             [
                                 key
                                 for key in o
-                                if isinstance(
-                                    key, six.string_types + (float, bool, tuple)
-                                )
+                                if isinstance(key, (str, float, bool, tuple))
                             ]
                         )
                         == 0
@@ -234,7 +227,7 @@ class SLPP(object):
                         if self.ch == "]":
                             self.next_chr()
                     self.white()
-                    ch = self.ch
+                    ch: str = self.ch
                     if ch in ("=", ","):
                         self.next_chr()
                         self.white()
@@ -249,7 +242,7 @@ class SLPP(object):
     words = {"true": True, "false": False, "nil": None}
 
     def word(self):
-        s = ""
+        s: str = ""
         if self.ch != "\n":
             s = self.ch
         self.next_chr()

@@ -7,8 +7,8 @@
         "-p",
         "test_*.py"
     ],
-    "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
     "python.analysis.inlayHints.functionReturnTypes": true,
@@ -19,5 +19,8 @@
     "python.languageServer": "Pylance",
     "python.linting.mypyEnabled": true,
     "python.poetryPath": "/home/david/.local/bin/poetry",
-    "editor.semanticHighlighting.enabled": true
+    "editor.semanticHighlighting.enabled": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ]
 }

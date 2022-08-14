@@ -1,12 +1,12 @@
 import unittest
-import six
 
 from big_slpp.main import slpp
+
 
 # Utility functions
 
 
-def is_iterator(obj):
+def is_iterator(obj) -> bool:
     try:
         iter(obj)
         return True
@@ -14,7 +14,7 @@ def is_iterator(obj):
         return False
 
 
-def differ(value, origin):
+def differ(value, origin) -> None:
     if type(value) is not type(origin):
         raise AssertionError(
             "Types does not match: {0}, {1}".format(type(value), type(origin))
@@ -32,7 +32,7 @@ def differ(value, origin):
                 )
         return
 
-    if isinstance(origin, six.string_types):
+    if isinstance(origin, str):
         assert value == origin, "{0} not match original: {1}.".format(value, origin)
         return
 
@@ -158,13 +158,7 @@ class TestSLPP(unittest.TestCase):
         differ(d, slpp.decode(slpp.encode(d)))
 
     def test_unicode(self):
-        if six.PY2:
-            self.assertEqual(
-                slpp.encode("Привет"),
-                '"\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82"',
-            )
-        if six.PY3:
-            self.assertEqual(slpp.encode("Привет"), '"Привет"')
+        self.assertEqual(slpp.encode("Привет"), '"Привет"')
         self.assertEqual(slpp.encode({"s": "Привет"}), '{\n\t["s"] = "Привет"\n}')
 
     def test_consistency(self):
