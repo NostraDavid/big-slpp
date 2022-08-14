@@ -1,5 +1,9 @@
 # Changelog for big-slpp
 
+## v1.0.5
+
+- sort deeper dicts too
+
 ## v1.0.4
 
 - remove extra tabs in front of curlybrace open '{'
