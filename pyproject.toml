@@ -16,6 +16,7 @@ pytest = "^7.1.2"
 isort = "^5.10.1"
 mypy = "^0.971"
 types-six = "^1.16.18"
+pytest-cov = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -107,3 +108,14 @@ module = [
     "retry.*",
 ]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--durations-min=1 --verbosity=2 --no-header --show-capture=all"
+# addopts = "--cov=big_slpp --cov-report xml"
+# addopts = "--durations-min=1 --stepwise --verbosity=2 --no-header --show-capture=all"
+# addopts = "--durations=10 --durations-min=1 --stepwise --verbosity=1 --no-header"
+testpaths = ["tests"]
+markers = ["no_cover: some pytest-integration default mark that's not known?."]
+python_classes = "Test*"
+python_files = "test_*.py"
+python_functions = "test_*"
