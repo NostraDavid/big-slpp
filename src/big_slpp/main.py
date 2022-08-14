@@ -229,7 +229,7 @@ class SLPP(object):
     words: dict[str, bool | None] = {"true": True, "false": False, "nil": None}
 
     def word(self) -> str | bool | None:
-        s: str = ""
+        s: Optional[str] = ""
         if self.ch != "\n":
             s = self.ch
         self.next_chr()
