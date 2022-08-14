@@ -1,41 +1,88 @@
-#### SLPP
-SLPP is a simple lua-python data structures parser.
+# Big-SLPP
 
-Lua data check:
+Big-SLPP is a simple lua-python data structures parser that also has trailing comma's.
 
-```lua
-data = '{ array = { 65, 23, 5 }, dict = { string = "value", array = { 3, 6, 4}, mixed = { 43, 54.3, false, string = "value", 9 } } }'
-> data = assert(loadstring('return ' .. data))()
-> for i,j in pairs(data['dict']) do print(i,j) end
-mixed   table: 0x2014290
-string  value
-array   table: 0x2014200
-```
+It also has two helper functions to help me re-create the files, as created by WoW.
 
-Parse lua data:
-
-```python
->>> from slpp import slpp as lua
->>> data = lua.decode('{ array = { 65, 23, 5 }, dict = { string = "value", array = { 3, 6, 4}, mixed = { 43, 54.3, false, string = "value", 9 } } }')
->>> print data
-{'array': [65, 23, 5], 'dict': {'mixed': {0: 43, 1: 54.33, 2: False, 4: 9, 'string': 'value'}, 'array': [3, 6, 4], 'string': 'value'}}
-```
-
-Dump python object:
-
-```python
->>> lua.encode(data)
-'{array = {65,23,5},dict = {mixed = {43,54.33,false,9,string = "value"},array = {3,6,4},string = "value"}}'
-```
-
-Dump test:
+## Example input
 
 ```lua
-> data = assert(loadstring('return ' .. '{array = {65,23,5,},dict = {mixed = {43,54.33,false,9,string = "value",},array = {3,6,4,},string = "value",},}'))()
-> print(data['dict'])
-table: 0x1b64ea0
-> for i,j in pairs(data['dict']) do print(i,j) end
-mixed   table: 0x880afe0
-array   table: 0x880af60
-string  value
+-- This is a lua file from the game World of Warcraft: Wrath of the Lich King
+-- I need those keys sorted, because WoW/Lua keeps moving around the keys for
+-- no good damn reason >:(
+-- HOW DO YOU EXPECT ME TO TRACK MY SETTINGS IN A REPO, BLIZZARD!?
+-- jk, I know Wrath is still relatively rough around the edges.
+
+_NPCScanOptionsCharacter = {
+	["Achievements"] = {
+		[1312] = true,
+		[2257] = true,
+	},
+	["NPCs"] = {
+		[18684] = "Bro'Gaz the Clanless",
+		[32491] = "Time-Lost Proto Drake",
+	},
+	["Version"] = "3.3.5.5",
+	["NPCWorldIDs"] = {
+		[18684] = 3,
+		[32491] = 4,
+	},
+}
+
 ```
+
+## `SLPP.decode()` output (not what I was looking for)
+
+```lua
+
+-- This is a lua file from the game World of Warcraft: Wrath of the Lich King
+-- I need those keys sorted, because WoW/Lua keeps moving around the keys for
+-- no good damn reason >:(
+-- HOW DO YOU EXPECT ME TO TRACK MY SETTINGS IN A REPO, BLIZZARD!?
+-- jk, I know Wrath is still relatively rough around the edges.
+
+
+["_NPCScanOptionsCharacter"] = {
+	["Achievements"] = {
+		[1312] = true,
+		[2257] = true
+	},
+	["NPCWorldIDs"] = {
+		[18684] = 3,
+		[32491] = 4
+	},
+	["NPCs"] = {
+		[18684] = "Bro'Gaz the Clanless",
+		[32491] = "Time-Lost Proto Drake"
+	},
+	["Version"] = "3.3.5.5"
+}
+
+```
+
+Note the lack of trailing comma's, and _NPCScanOptionsCharacter being wrapped
+in quotes and brackets.
+
+## `big_slpp.utils.unwrap()`'s output
+
+```lua
+
+_NPCScanOptionsCharacter = {
+	["Achievements"] = {
+		[1312] = true,
+		[2257] = true,
+	},
+	["NPCWorldIDs"] = {
+		[18684] = 3,
+		[32491] = 4,
+	},
+	["NPCs"] = {
+		[18684] = "Bro'Gaz the Clanless",
+		[32491] = "Time-Lost Proto Drake",
+	},
+	["Version"] = "3.3.5.5",
+}
+```
+
+Practically the same, but sorted! :D
+Also, trailing comma's!

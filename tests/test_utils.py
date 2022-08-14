@@ -1,4 +1,5 @@
 import pytest
+from big_slpp.utils import order_dict
 
 
 def is_iterator(obj) -> bool:
@@ -65,3 +66,36 @@ def test_differ() -> None:
         differs({"6": 4, "3": "1"}, {"4": "6", "1": 3})
     with pytest.raises(AssertionError, match="4 not match original: no."):
         differs("4", "no")
+
+
+def test_order_dict_normal_use() -> None:
+    """
+    Insert a dict with unsorted keys, get a dict with sorted keys out.
+    """
+    input: dict[str, str] = {
+        "3": "a",
+        "2": "b",
+        "1": "c",
+    }
+    output = order_dict(input)
+    assert list(input.keys()) == ["3", "2", "1"]
+    assert list(output.keys()) != list(input.keys())
+    assert list(output.keys()) == ["1", "2", "3"]
+
+
+def test_order_dict_with_int_and_str_keys() -> None:
+    """
+    Insert a dict with ints and strs as keys, get a dict back that
+    has ints first, strs second, fully ordered"""
+    input: dict[int | str, str] = {
+        3: "a",
+        "c": "b",
+        "b": "c",
+        2: "d",
+        "a": "e",
+        1: "f",
+    }
+    output = order_dict(input)
+    assert list(input.keys()) == [3, 'c', 'b', 2, 'a', 1]
+    assert list(output.keys()) != list(input.keys())
+    assert list(output.keys()) == [1, 2, 3, 'a', 'b', 'c']

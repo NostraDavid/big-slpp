@@ -1,7 +1,11 @@
 from typing import Any
 
-from big_slpp.main import slpp
+from big_slpp import slpp
+from big_slpp.utils import order_dict, wrap, unwrap
 from tests.test_utils import differs
+from pathlib import Path
+
+TESTS: Path = Path(__file__).parent
 
 
 def test_numbers() -> None:
@@ -126,18 +130,6 @@ def test_comments() -> None:
     )
 
 
-def order_dict(dictionary: dict) -> dict:
-    """unordered dict comes in, ordered dict comes out"""
-    # https://stackoverflow.com/a/47882384
-    result: dict = {}
-    for k, v in sorted(dictionary.items(), key=lambda t: (isinstance(t[0], str), t[0])):
-        if isinstance(v, dict):
-            result[k] = order_dict(v)
-        else:
-            result[k] = v
-    return result
-
-
 def test_saved_variables_npcscan_lua() -> None:
     """
     So, for context:
@@ -156,62 +148,20 @@ def test_saved_variables_npcscan_lua() -> None:
     Anyway, the filepath the data is coming from is SavedVariabels/_NPCScan.lua,
     hence the name of the test.
     """
-
-    def wrap(s: str) -> str:
-        """
-        WoW doesn't save a table as root object, but a variable with a table,
-        or even multiple variables, each with a table.
-
-        To make them work in SLPP, we'll need to wrap them in extra
-        staches/curly braces.
-        """
-        return "{" + s + "}"
-
-    input: str = """_NPCScanOptionsCharacter = {
-\t["Achievements"] = {
-\t\t[1312] = true,
-\t\t[2257] = true,
-\t},
-\t["NPCs"] = {
-\t\t[18684] = "Bro'Gaz the Clanless",
-\t\t[32491] = "Time-Lost Proto Drake",
-\t},
-\t["Version"] = "3.3.5.5",
-\t["NPCWorldIDs"] = {
-\t\t[18684] = 3,
-\t\t[32491] = 4,
-\t},
-}"""
-    wrapped_input = wrap(input)
+    with open(TESTS / "data" / "_NPCScan.lua", encoding="latin-1") as fp:
+        input_str = fp.read()
+    wrapped_input = wrap(input_str)
     output_dict = slpp.decode(wrapped_input)
     ordered_dict = order_dict(output_dict)
-    output_str = slpp.encode(ordered_dict)
-    assert (
-        output_str
-        == """{
-\t["_NPCScanOptionsCharacter"] = {
-\t\t["Achievements"] = \t{
-\t\t\t[1312] = true,
-\t\t\t[2257] = true,
-\t\t},
-\t\t["NPCWorldIDs"] = \t{
-\t\t\t[18684] = 3,
-\t\t\t[32491] = 4,
-\t\t},
-\t\t["NPCs"] = \t{
-\t\t\t[18684] = "Bro\'Gaz the Clanless",
-\t\t\t[32491] = "Time-Lost Proto Drake",
-\t\t},
-\t\t["Version"] = "3.3.5.5",
-\t},
-}"""
-    )
+    unwrapped_output = unwrap(ordered_dict)
+    with open(TESTS / "data" / "_NPCScan_sorted.lua", encoding="latin-1") as fp:
+        expected_output = fp.read()
+    with open(TESTS / "example.lua", "w+") as fp:  # temp
+        fp.write(unwrapped_output)
+    assert unwrapped_output == expected_output
 
 
 def test_saved_variables_npcscan_lua_minimal_example() -> None:
-    def wrap(s: str) -> str:
-        return "{" + s + "}"
-
     input: str = """asd = { [2257] = true, [1312] = true, }"""
     wrapped_input = wrap(input)
     output_dict = slpp.decode(wrapped_input)

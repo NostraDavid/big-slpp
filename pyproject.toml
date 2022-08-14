@@ -1,10 +1,12 @@
 [tool.poetry]
 name = "big-slpp"
-version = "0.0.0"
-description = "SirAnthony's SLPP, but modernized (also, trailing comma's)"
+version = "1.0.1"
+description = "SirAnthony's SLPP, but modernized code (also, trailing comma's)"
 authors = ["NostraDavid <55331731+nostradavid@users.noreply.github.com>"]
 license = "MIT"
-packages = [{ include = "big_slpp", from = "src" }]
+packages = [{ include = "big_slpp", from = "lib" }]
+readme = "README.md"
+repository = "https://github.com/NostraDavid/big-slpp"
 
 [tool.poetry.dependencies]
 python = "^3.9"

@@ -26,5 +26,6 @@
     "editor.rulers": [
         80,
         120
-    ]
+    ],
+    "workbench.editor.pinnedTabSizing": "compact"
 }
