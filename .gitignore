@@ -11,7 +11,7 @@
 
 # unignore folders
 !cmd
-!src
+!lib
 !tests
 # Just because I'm lazy:
 !.vscode
