@@ -22,5 +22,9 @@
     "editor.semanticHighlighting.enabled": true,
     "python.testing.pytestArgs": [
         "tests"
+    ],
+    "editor.rulers": [
+        80,
+        120
     ]
 }
