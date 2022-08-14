@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from big_slpp import slpp
 
 
@@ -11,6 +12,13 @@ def order_dict(dictionary: dict) -> dict:
     for k, v in sorted(dictionary.items(), key=lambda t: (isinstance(t[0], str), t[0])):
         if isinstance(v, dict):
             result[k] = order_dict(v)
+        elif isinstance(v, list):
+            result[k] = [order_dict(x) if callable(getattr(x, "items", None)) else x for x in v]
+            if len(result[k]) > 0:
+                if type(result[k][0]) == dict:
+                    result[k] = sorted(
+                        result[k], key=lambda d: list(OrderedDict(d).keys())
+                    )  # sort if it's a list of dicts; otherwise leave alone
         else:
             result[k] = v
     return result
