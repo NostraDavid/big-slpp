@@ -1,6 +1,7 @@
 import re
 import sys
 from numbers import Number
+from typing import Any, Optional
 
 ERRORS: dict[str, str] = {
     "unexp_end_string": "Unexpected end of string while parsing Lua string.",
@@ -11,7 +12,8 @@ ERRORS: dict[str, str] = {
 }
 
 
-def sequential(lst) -> bool:
+def sequential(lst: list[Any]) -> bool:
+    """Are the variables in the list sequestial?"""
     length: int = len(lst)
     if length == 0 or lst[0] != 0:
         return False
@@ -28,13 +30,13 @@ class ParseError(Exception):
 
 class SLPP(object):
     def __init__(self) -> None:
-        self.text: str = ""
-        self.ch: str = ""
-        self.at: int = 0
-        self.len: int = 0
-        self.depth: int = 0
-        self.space: re.Pattern[str] = re.compile(r"\s", re.M)
-        self.alnum: re.Pattern[str] = re.compile(r"\w", re.M)
+        self.text: str = ""  # the text/code to parser
+        self.ch: str = ""  # the current character we're handling
+        self.at: int = 0  # the current position within the text
+        self.len: int = 0  # total length of self.text
+        self.depth: int = 0  # no clue yet what this is, lol
+        self.space: re.Pattern[str] = re.compile(r"\s", re.M)  # regex to gobble whitespaces
+        self.alnum: re.Pattern[str] = re.compile(r"\w", re.M)  # regex to gobble alphanumerics
         self.newline: str = "\n"
         self.tab: str = "\t"
 
@@ -52,10 +54,10 @@ class SLPP(object):
         self.depth = 0
         return self.__encode(obj)
 
-    def __encode(self, obj):
-        s = ""
-        tab = self.tab
-        newline = self.newline
+    def __encode(self, obj) -> str:
+        s: str = ""
+        tab: str = self.tab
+        newline: str = self.newline
 
         if isinstance(obj, str):
             s += '"%s"' % obj.replace(r'"', r"\"")
@@ -71,25 +73,15 @@ class SLPP(object):
             self.depth += 1
             if len(obj) == 0 or (
                 not isinstance(obj, dict)
-                and len(
-                    [
-                        x
-                        for x in obj
-                        if isinstance(x, Number) or (isinstance(x, str) and len(x) < 10)
-                    ]
-                )
-                == len(obj)
+                and len([x for x in obj if isinstance(x, Number) or (isinstance(x, str) and len(x) < 10)]) == len(obj)
             ):
                 newline = tab = ""
-            dp = tab * self.depth
+            dp: str = tab * self.depth
             s += "%s{%s" % (tab * (self.depth - 2), newline)
             if isinstance(obj, dict):
-                key_list = [
-                    "[%s]" if isinstance(k, Number) else '["%s"]' for k in obj.keys()
-                ]
-                contents = [
-                    dp + (key + " = %s") % (k, self.__encode(v))
-                    for (k, v), key in zip(obj.items(), key_list)
+                key_list: list[str] = ["[%s]" if isinstance(k, Number) else '["%s"]' for k in obj.keys()]
+                contents: list[str] = [
+                    dp + (key + " = %s") % (k, self.__encode(v)) for (k, v), key in zip(obj.items(), key_list)
                 ]
                 s += (",%s" % newline).join(contents)
             else:
@@ -98,7 +90,8 @@ class SLPP(object):
             s += "%s%s}" % (newline, tab * self.depth)
         return s
 
-    def white(self):
+    def white(self) -> None:
+        """Gobble up whitespaces"""
         while self.ch:
             if self.space.match(self.ch):
                 self.next_chr()
@@ -106,11 +99,11 @@ class SLPP(object):
                 break
         self.comment()
 
-    def comment(self):
+    def comment(self) -> None:
         if self.ch == "-" and self.next_is("-"):
             self.next_chr()
             # TODO: for fancy comments need to improve
-            multiline = self.next_chr() and self.ch == "[" and self.next_is("[")
+            multiline: bool | None = self.next_chr() and self.ch == "[" and self.next_is("[")
             while self.ch:
                 if multiline:
                     if self.ch == "]" and self.next_is("]"):
@@ -124,28 +117,30 @@ class SLPP(object):
                     break
                 self.next_chr()
 
-    def next_is(self, value):
+    def next_is(self, value: str) -> bool:
         if self.at >= self.len:
             return False
         return self.text[self.at] == value
 
-    def prev_is(self, value):
+    def prev_is(self, value: str) -> bool:
         if self.at < 2:
             return False
         return self.text[self.at - 2] == value
 
-    def next_chr(self):
+    def next_chr(self) -> bool:
         if self.at >= self.len:
-            self.ch = None
-            return None
+            self.ch = ""
+            return False
         self.ch = self.text[self.at]
         self.at += 1
         return True
 
-    def value(self):
+    def value(
+        self,
+    ) -> Optional[Any]:
         self.white()
         if not self.ch:
-            return
+            return ""
         if self.ch == "{":
             return self.object()
         if self.ch == "[":
@@ -156,13 +151,13 @@ class SLPP(object):
             return self.number()
         return self.word()
 
-    def string(self, end=None):
-        s = ""
-        start = self.ch
+    def string(self, end: Optional[str] = None) -> str:
+        s: str = ""
+        start: str = self.ch
         if end == "[":
             end = "]"
         if start in ['"', "'", "["]:
-            double = start == "[" and self.prev_is(start)
+            double: bool = start == "[" and self.prev_is(start)
             while self.next_chr():
                 if self.ch == end and (not double or self.next_is(end)):
                     self.next_chr()
@@ -177,9 +172,9 @@ class SLPP(object):
                 s += self.ch
         raise ParseError(ERRORS["unexp_end_string"])
 
-    def object(self):
-        o: dict = {}
-        k = None
+    def object(self) -> dict[str | float | int | bool | tuple[Any], Any] | list[Any]:
+        o: dict[str | float | int | bool | tuple[Any], Any] | list[Any] = {}
+        k: str | float | int | bool | tuple[Any] | None = None
         idx: int = 0
         numeric_keys: bool = False
         self.depth += 1
@@ -201,19 +196,10 @@ class SLPP(object):
                     self.next_chr()
                     if k is not None:
                         o[idx] = k
-                    if (
-                        len(
-                            [
-                                key
-                                for key in o
-                                if isinstance(key, (str, float, bool, tuple))
-                            ]
-                        )
-                        == 0
-                    ):
-                        so = sorted([key for key in o])
+                    if len([key for key in o if isinstance(key, (str, float, bool, tuple))]) == 0:
+                        so: list[Any] = sorted([key for key in o])
                         if sequential(so):
-                            ar = []
+                            ar: list[Any] = []
                             for key in o:
                                 ar.insert(key, o[key])
                             o = ar
@@ -239,27 +225,28 @@ class SLPP(object):
                         k = None
         raise ParseError(ERRORS["unexp_end_table"])  # Bad exit here
 
-    words = {"true": True, "false": False, "nil": None}
+    words: dict[str, bool | None] = {"true": True, "false": False, "nil": None}
 
-    def word(self):
-        s: str = ""
+    def word(self) -> str | bool | None:
+        s: Optional[str] = ""
         if self.ch != "\n":
             s = self.ch
         self.next_chr()
         while self.ch is not None and self.alnum.match(self.ch) and s not in self.words:
-            s += self.ch
+            # In the while, we ensure that self.ch isn't None, so shut up, Pylance!
+            s += self.ch  # type: ignore
             self.next_chr()
         return self.words.get(s, s)
 
-    def number(self):
-        def next_digit(err):
-            n = self.ch
+    def number(self) -> int | float:
+        def next_digit(err) -> str:
+            n: str = self.ch
             self.next_chr()
             if not self.ch or not self.ch.isdigit():
                 raise ParseError(err)
             return n
 
-        n = ""
+        n: str = ""
         try:
             if self.ch == "-":
                 n += next_digit(ERRORS["mfnumber_minus"])
@@ -285,25 +272,25 @@ class SLPP(object):
             return 0
         try:
             return int(n, 0)
-        except:
+        except Exception:
             pass
         return float(n)
 
-    def digit(self):
-        n = ""
+    def digit(self) -> str:
+        n: str = ""
         while self.ch and self.ch.isdigit():
             n += self.ch
             self.next_chr()
         return n
 
-    def hex(self):
-        n = ""
+    def hex(self) -> str:
+        n: str = ""
         while self.ch and (self.ch in "ABCDEFabcdef" or self.ch.isdigit()):
             n += self.ch
             self.next_chr()
         return n
 
 
-slpp = SLPP()
+slpp: SLPP = SLPP()
 
-__all__ = ["slpp"]
+__all__: list[str] = ["slpp"]
