@@ -1,5 +1,5 @@
 from typing import Any
-
+import pytest
 from big_slpp import slpp
 from big_slpp.utils import order_dict, wrap, unwrap
 from tests.test_utils import differs
@@ -130,7 +130,8 @@ def test_comments() -> None:
     )
 
 
-def test_saved_variables_npcscan_lua() -> None:
+@pytest.mark.parametrize("save_output", [False])
+def test_saved_variables_npcscan_lua(save_output) -> None:
     """
     So, for context:
 
@@ -158,6 +159,10 @@ def test_saved_variables_npcscan_lua() -> None:
         expected_output = fp.read()
     assert unwrapped_output == expected_output
 
+    if save_output:
+        with open(TESTS / "data" / "_NPCScan_sorted.lua", "w+") as fp:
+            fp.write(unwrapped_output)
+
 
 def test_saved_variables_npcscan_lua_minimal_example() -> None:
     input: str = """asd = { [2257] = true, [1312] = true, }"""
@@ -168,7 +173,8 @@ def test_saved_variables_npcscan_lua_minimal_example() -> None:
     assert output_str == """{\n\t["asd"] = {\n\t\t[1312] = true,\n\t\t[2257] = true,\n\t},\n}"""
 
 
-def test_saved_variables_carbonite_lua() -> None:
+@pytest.mark.parametrize("save_output", [False])
+def test_saved_variables_carbonite_lua(save_output) -> None:
     """
     Same as test_saved_variables_npcscan_lua, but with Carbonite.lua.
 
@@ -184,3 +190,30 @@ def test_saved_variables_carbonite_lua() -> None:
     with open(TESTS / "data" / "Carbonite_sorted.lua", encoding="latin-1") as fp:
         expected_output = fp.read()
     assert unwrapped_output == expected_output
+
+    if save_output:
+        with open(TESTS / "data" / "Carbonite_sorted.lua", "w+") as fp:
+            fp.write(unwrapped_output)
+
+
+@pytest.mark.parametrize("save_output", [False])
+def test_saved_variables_details_lua(save_output) -> None:
+    """
+    Same as test_saved_variables_npcscan_lua, but with Details.lua.
+
+    This file has escaped double-quotes in the key-names.
+    Look for 'Zeppelin Pilot~\"Screaming\" Screed Luckheed', as example
+    """
+    with open(TESTS / "data" / "Details.lua", encoding="latin-1") as fp:
+        input_str = fp.read()
+    wrapped_input = wrap(input_str)
+    output_dict = slpp.decode(wrapped_input)
+    ordered_dict = order_dict(output_dict)
+    unwrapped_output = unwrap(ordered_dict)
+    with open(TESTS / "data" / "Details_sorted.lua", encoding="latin-1") as fp:
+        expected_output = fp.read()
+    assert unwrapped_output == expected_output
+
+    if save_output:
+        with open(TESTS / "data" / "Details_sorted.lua", "w+") as fp:
+            fp.write(unwrapped_output)
