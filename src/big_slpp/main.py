@@ -31,7 +31,7 @@ class ParseError(Exception):
 class SLPP(object):
     def __init__(self) -> None:
         self.text: str = ""  # the text/code to parser
-        self.ch: str = ""  # the current character we're handling
+        self.ch: Optional[str] = ""  # the current character we're handling
         self.at: int = 0  # the current position within the text
         self.len: int = 0  # total length of self.text
         self.depth: int = 0  # no clue yet what this is, lol
@@ -40,21 +40,21 @@ class SLPP(object):
         self.newline: str = "\n"
         self.tab: str = "\t"
 
-    def decode(self, text):
+    def decode(self, text) -> Optional[Any]:
         if not text:
-            return
+            return None
         self.text = text
         self.at, self.ch, self.depth = 0, "", 0
         self.len = len(text)
         self.next_chr()
-        result = self.value()
+        result: Optional[Any] = self.value()
         return result
 
-    def encode(self, obj):
+    def encode(self, obj) -> str:
         self.depth = 0
         return self.__encode(obj)
 
-    def __encode(self, obj) -> str:
+    def __encode(self, obj: str | bytes | bool | None | Number | list | tuple | dict) -> str:
         s: str = ""
         tab: str = self.tab
         newline: str = self.newline
@@ -87,7 +87,7 @@ class SLPP(object):
             else:
                 s += (",%s" % newline).join([dp + self.__encode(el) for el in obj])
             self.depth -= 1
-            s += "%s%s}" % (newline, tab * self.depth)
+            s += ",%s%s}" % (newline, tab * self.depth)
         return s
 
     def white(self) -> None:
@@ -100,24 +100,25 @@ class SLPP(object):
         self.comment()
 
     def comment(self) -> None:
-        if self.ch == "-" and self.next_is("-"):
-            self.next_chr()
-            # TODO: for fancy comments need to improve
-            multiline: bool | None = self.next_chr() and self.ch == "[" and self.next_is("[")
-            while self.ch:
-                if multiline:
-                    if self.ch == "]" and self.next_is("]"):
-                        self.next_chr()
-                        self.next_chr()
-                        self.white()
-                        break
-                # `--` is a comment, skip to next new line
-                elif re.match("\n", self.ch):
+        if not (self.ch == "-" and self.next_is("-")):
+            return
+        self.next_chr()
+        # TODO: for fancy comments need to improve
+        multiline: bool | None = self.next_chr() and self.ch == "[" and self.next_is("[")
+        while self.ch:
+            if multiline:
+                if self.ch == "]" and self.next_is("]"):
+                    self.next_chr()
+                    self.next_chr()
                     self.white()
                     break
-                self.next_chr()
+            # `--` is a comment, skip to next new line
+            elif re.match("\n", self.ch):
+                self.white()
+                break
+            self.next_chr()
 
-    def next_is(self, value: str) -> bool:
+    def next_is(self, value: Optional[str]) -> bool:
         if self.at >= self.len:
             return False
         return self.text[self.at] == value
@@ -129,7 +130,7 @@ class SLPP(object):
 
     def next_chr(self) -> bool:
         if self.at >= self.len:
-            self.ch = ""
+            self.ch = None
             return False
         self.ch = self.text[self.at]
         self.at += 1
@@ -140,7 +141,7 @@ class SLPP(object):
     ) -> Optional[Any]:
         self.white()
         if not self.ch:
-            return ""
+            return None
         if self.ch == "{":
             return self.object()
         if self.ch == "[":
@@ -153,7 +154,7 @@ class SLPP(object):
 
     def string(self, end: Optional[str] = None) -> str:
         s: str = ""
-        start: str = self.ch
+        start: Optional[str] = self.ch
         if end == "[":
             end = "]"
         if start in ['"', "'", "["]:
@@ -202,7 +203,7 @@ class SLPP(object):
                             ar: list[Any] = []
                             for key in o:
                                 ar.insert(key, o[key])
-                            o = ar
+                            o = ar  # this changes o's type
                     return o  # or here
                 else:
                     if self.ch == ",":
@@ -228,7 +229,7 @@ class SLPP(object):
     words: dict[str, bool | None] = {"true": True, "false": False, "nil": None}
 
     def word(self) -> str | bool | None:
-        s: Optional[str] = ""
+        s: str = ""
         if self.ch != "\n":
             s = self.ch
         self.next_chr()

@@ -63,7 +63,7 @@ def test_table() -> None:
     assert slpp.decode("{0, 1, 0}") == [0, 1, 0]
 
     # Mixed encode
-    assert slpp.encode({"0": 0, "name": "john"}) == '{\n\t["0"] = 0,\n\t["name"] = "john"\n}'
+    assert slpp.encode({"0": 0, "name": "john"}) == '{\n\t["0"] = 0,\n\t["name"] = "john",\n}'
 
 
 def test_string() -> None:
@@ -71,7 +71,7 @@ def test_string() -> None:
     assert slpp.decode(r"'test\'s string'") == "test's string"
 
     # Add escaping on encode:
-    assert slpp.encode({"a": 'func("call()");'}) == '{\n\t["a"] = "func(\\"call()\\");"\n}'
+    assert slpp.encode({"a": 'func("call()");'}) == '{\n\t["a"] = "func(\\"call()\\");",\n}'
 
     # Strings inside double brackets
     longstr: str = ' ("word") . [ ["word"] . ["word"] . ("word" | "word" | "word" | "word") . ["word"] ] '
@@ -91,7 +91,7 @@ def test_basic() -> None:
 
 def test_unicode() -> None:
     assert slpp.encode("Привет") == '"Привет"'
-    assert slpp.encode({"s": "Привет"}) == '{\n\t["s"] = "Привет"\n}'
+    assert slpp.encode({"s": "Привет"}) == '{\n\t["s"] = "Привет",\n}'
 
 
 def test_consistency() -> None:
@@ -124,3 +124,130 @@ def test_comments() -> None:
         '{\n["string"] = "A text\n--[[with\ncomment]]\n",\n--[[\n["comented"] = "string\nnewline",\n]]}',
         {"string": "A text\n--[[with\ncomment]]\n"},
     )
+
+
+def order_dict(dictionary: dict) -> dict:
+    """unordered dict comes in, ordered dict comes out"""
+    # https://stackoverflow.com/a/47882384
+    result: dict = {}
+    for k, v in sorted(dictionary.items(), key=lambda t: (isinstance(t[0], str), t[0])):
+        if isinstance(v, dict):
+            result[k] = order_dict(v)
+        else:
+            result[k] = v
+    return result
+
+
+def test_saved_variables_npcscan_lua() -> None:
+    """
+    So, for context:
+
+    World of Warcraft saves its addon data as lua files, but since Lua Tables do
+    not sort their keys, that makes it hard to keep a clean track of my WoW
+    settings, which I turned into a git repo, because sometimes the only changes
+    are the keys (and their values) moving around.
+
+    So I made a script that sorts the keys, with the help of SLPP, but it turns
+    out that SLPP doesn't write the trailing comma, which I don't like.
+
+    So I 'had' to cleanup the SLPP repo and add the functionality to keep that
+    trailing comma.
+
+    Anyway, the filepath the data is coming from is SavedVariabels/_NPCScan.lua,
+    hence the name of the test.
+    """
+
+    def wrap(s: str) -> str:
+        """
+        WoW doesn't save a table as root object, but a variable with a table,
+        or even multiple variables, each with a table.
+
+        To make them work in SLPP, we'll need to wrap them in extra
+        staches/curly braces.
+        """
+        return "{" + s + "}"
+
+    input: str = """_NPCScanOptionsCharacter = {
+\t["Achievements"] = {
+\t\t[1312] = true,
+\t\t[2257] = true,
+\t},
+\t["NPCs"] = {
+\t\t[18684] = "Bro'Gaz the Clanless",
+\t\t[32491] = "Time-Lost Proto Drake",
+\t},
+\t["Version"] = "3.3.5.5",
+\t["NPCWorldIDs"] = {
+\t\t[18684] = 3,
+\t\t[32491] = 4,
+\t},
+}"""
+    wrapped_input = wrap(input)
+    output_dict = slpp.decode(wrapped_input)
+    ordered_dict = order_dict(output_dict)
+    output_str = slpp.encode(ordered_dict)
+    assert (
+        output_str
+        == """{
+\t["_NPCScanOptionsCharacter"] = {
+\t\t["Achievements"] = \t{
+\t\t\t[1312] = true,
+\t\t\t[2257] = true,
+\t\t},
+\t\t["NPCWorldIDs"] = \t{
+\t\t\t[18684] = 3,
+\t\t\t[32491] = 4,
+\t\t},
+\t\t["NPCs"] = \t{
+\t\t\t[18684] = "Bro\'Gaz the Clanless",
+\t\t\t[32491] = "Time-Lost Proto Drake",
+\t\t},
+\t\t["Version"] = "3.3.5.5",
+\t},
+}"""
+    )
+
+
+# """_NPCScanOptionsCharacter = {
+# \t["Achievements"] = {
+# \t\t[1312] = true,
+# \t\t[2257] = true,
+# \t},
+# \t["NPCWorldIDs"] = {
+# \t\t[18684] = 3,
+# \t\t[32491] = 4,
+# \t},
+# \t["NPCs"] = {
+# \t\t[18684] = "Bro'Gaz the Clanless",
+# \t\t[32491] = "Time-Lost Proto Drake",
+# \t},
+# \t["Version"] = "3.3.5.5",
+# }"""
+
+
+def test_saved_variables_npcscan_lua_minimal_example() -> None:
+    def wrap(s: str) -> str:
+        return "{" + s + "}"
+
+    input: str = """asd = { [2257] = true, [1312] = true, }"""
+    wrapped_input = wrap(input)
+    output_dict = slpp.decode(wrapped_input)
+    ordered_dict = order_dict(output_dict)
+    output_str = slpp.encode(ordered_dict)
+    assert (
+        output_str
+        == """{
+\t["asd"] = {
+\t\t[1312] = true,
+\t\t[2257] = true,
+\t},
+}"""
+    )
+
+
+# """{
+# \t["asd"] = {
+# \t\t[1312] = true,
+# \t\t[2257] = true,
+# \t}
+# }"""
