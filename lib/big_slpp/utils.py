@@ -35,4 +35,4 @@ def unwrap(ordered_dict: dict) -> str:
     result: str = ""
     for k, v in ordered_dict.items():
         result += "\n" + k + " = " + slpp.encode(v)
-    return result + "\n"
+    return result.replace("{,}", "{}") + "\n"

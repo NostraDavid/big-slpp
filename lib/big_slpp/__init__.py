@@ -81,7 +81,7 @@ class SLPP(object):
             if isinstance(obj, dict):
                 key_list: list[str] = ["[%s]" if isinstance(k, Number) else '["%s"]' for k in obj.keys()]
                 contents: list[str] = [
-                    dp + (key + " = %s") % (k, self.__encode(v)) for (k, v), key in zip(obj.items(), key_list)
+                    dp + (key + " = %s") % (k if not isinstance(k, str) else k.replace(r'"', r"\""), self.__encode(v)) for (k, v), key in zip(obj.items(), key_list)
                 ]
                 s += (",%s" % newline).join(contents)
             else:
