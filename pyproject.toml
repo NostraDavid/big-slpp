@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "big-slpp"
-version = "1.0.3"
+version = "1.0.4"
 description = "SirAnthony's SLPP, but modernized code (also, trailing comma's)"
 authors = ["NostraDavid <55331731+nostradavid@users.noreply.github.com>"]
 license = "MIT"
