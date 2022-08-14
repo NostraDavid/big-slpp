@@ -1,0 +1,23 @@
+{
+    "python.defaultInterpreterPath": "/home/david/.cache/pypoetry/virtualenvs/big-slpp-c7Xz1kQP-py3.8/bin/python",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.completeFunctionParens": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.formatting.provider": "black",
+    "python.languageServer": "Pylance",
+    "python.linting.mypyEnabled": true,
+    "python.poetryPath": "/home/david/.local/bin/poetry",
+    "editor.semanticHighlighting.enabled": true
+}

@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "big-slpp"
+version = "0.0.0"
+description = "SirAnthony's SLPP, but modernized (also, trailing comma's)"
+authors = ["NostraDavid <55331731+nostradavid@users.noreply.github.com>"]
+license = "MIT"
+packages = [{ include = "big_slpp", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+six = "^1.16.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.6.0"
+flake8 = "^5.0.4"
+pytest = "^7.1.2"
+isort = "^5.10.1"
+mypy = "^0.971"
+types-six = "^1.16.18"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
