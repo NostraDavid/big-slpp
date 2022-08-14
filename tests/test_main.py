@@ -16,9 +16,7 @@ def is_iterator(obj) -> bool:
 
 def differ(value, origin) -> None:
     if type(value) is not type(origin):
-        raise AssertionError(
-            "Types does not match: {0}, {1}".format(type(value), type(origin))
-        )
+        raise AssertionError("Types does not match: {0}, {1}".format(type(value), type(origin)))
 
     if isinstance(origin, dict):
         for key, item in origin.items():
@@ -26,9 +24,7 @@ def differ(value, origin) -> None:
                 differ(value[key], item)
             except KeyError:
                 raise AssertionError(
-                    """{0} not match original: {1}; Key: {2}, item: {3}""".format(
-                        value, origin, key, item
-                    )
+                    """{0} not match original: {1}; Key: {2}, item: {3}""".format(value, origin, key, item)
                 )
         return
 
@@ -41,11 +37,7 @@ def differ(value, origin) -> None:
             try:
                 differ(value[i], origin[i])
             except IndexError:
-                raise AssertionError(
-                    "{0} not match original: {1}. Item {2} not found".format(
-                        value, origin, origin[i]
-                    )
-                )
+                raise AssertionError("{0} not match original: {1}. Item {2} not found".format(value, origin, origin[i]))
         return
 
     assert value == origin, "{0} not match original: {1}.".format(value, origin)
@@ -66,9 +58,7 @@ class TestUtilityFunctions(unittest.TestCase):
         # Different:
         self.assertRaises(AssertionError, differ, 1, 2)
         self.assertRaises(AssertionError, differ, [2, 3], [3, 2])
-        self.assertRaises(
-            AssertionError, differ, {"6": 4, "3": "1"}, {"4": "6", "1": 3}
-        )
+        self.assertRaises(AssertionError, differ, {"6": 4, "3": "1"}, {"4": "6", "1": 3})
         self.assertRaises(AssertionError, differ, "4", "no")
 
 
@@ -147,9 +137,7 @@ class TestSLPP(unittest.TestCase):
         # Strings inside double brackets
         longstr = ' ("word") . [ ["word"] . ["word"] . ("word" | "word" | "word" | "word") . ["word"] ] '
         self.assertEqual(slpp.decode("[[" + longstr + "]]"), longstr)
-        self.assertEqual(
-            slpp.decode("{ [0] = [[" + longstr + ']], [1] = "a"}'), [longstr, "a"]
-        )
+        self.assertEqual(slpp.decode("{ [0] = [[" + longstr + ']], [1] = "a"}'), [longstr, "a"])
 
     def test_basic(self):
         # No data loss:
@@ -166,9 +154,7 @@ class TestSLPP(unittest.TestCase):
             d = slpp.decode(data)
             self.assertEqual(d, slpp.decode(slpp.encode(d)))
 
-        t(
-            '{ 43, 54.3, false, string = "value", 9, [4] = 111, [1] = 222, [2.1] = "text" }'
-        )
+        t('{ 43, 54.3, false, string = "value", 9, [4] = 111, [1] = 222, [2.1] = "text" }')
         t("{ 43, 54.3, false, 9, [5] = 111, [7] = 222 }")
         t("{ [7] = 111, [5] = 222, 43, 54.3, false, 9 }")
         t("{ 43, 54.3, false, 9, [4] = 111, [5] = 52.1 }")
