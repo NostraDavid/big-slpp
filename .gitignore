@@ -1,6 +1,20 @@
-*.pyc
-*~
-build/
-dist/
+# ignore all root items
+/*
+
+# unignore files
+!.gitignore
+!LICENSE
+!poetry.lock
+!pyproject.toml
+!README.md
+!setup.cfg
+
+# unignore folders
+!src
+!tests
+# Just because I'm lazy:
+!.vscode
+
+# recursively re-ignore
+__pycache__
 *.egg-info/
-*.swp
